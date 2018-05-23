@@ -12,7 +12,7 @@ import java.io.IOException;
  * Version: V1.0  <p />
  * Description: Hystrix请求上下文过滤器 <p />
  */
-@WebFilter(filterName = "hystrixRequestContextFilter", urlPatterns = "/getProductInfo/**")
+@WebFilter(filterName = "hystrixRequestContextFilter", urlPatterns = {"/getProductInfo/*", "/getProductInfos1/*"})
 public class HystrixRequestContextFilter implements Filter {
 
     @Override

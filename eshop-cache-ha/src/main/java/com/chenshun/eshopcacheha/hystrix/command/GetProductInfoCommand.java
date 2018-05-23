@@ -49,9 +49,10 @@ public class GetProductInfoCommand extends HystrixCommand<ProductInfo> {
         return "product_info_" + productId;
     }
 
-    public static void flushCache(Long id) {
+    public static void flushCache(Long productId) {
         // 刷新缓存，根据 id 进行清理
-        HystrixRequestCache.getInstance(COMMAND_KEY, HystrixConcurrencyStrategyDefault.getInstance()).clear(String.valueOf(id));
+        HystrixRequestCache.getInstance(COMMAND_KEY,
+                HystrixConcurrencyStrategyDefault.getInstance()).clear("product_info_" + productId);
     }
 
 }

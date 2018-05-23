@@ -1,16 +1,12 @@
 package com.chenshun.eshopcacheha.controller;
 
-import com.chenshun.eshopcacheha.hystrix.command.GetBrandNameCommand;
-import com.chenshun.eshopcacheha.hystrix.command.GetProductInfoCommand;
-import com.chenshun.eshopcacheha.hystrix.command.GetProductInfoCommand2;
-import com.chenshun.eshopcacheha.hystrix.command.GetProductInfosCommand;
+import com.chenshun.eshopcacheha.hystrix.command.*;
 import com.chenshun.eshopcacheha.model.ProductInfo;
 import com.chenshun.eshopcacheha.service.CacheService;
 import com.chenshun.eshopcacheha.util.http.HttpClientUtils;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixObservableCommand;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -18,8 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 import rx.Observable;
 import rx.Observer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * User: mew <p />
@@ -27,10 +27,9 @@ import java.util.Map;
  * Version: V1.0  <p />
  * Description:  <p />
  */
+@Slf4j
 @RestController
 public class CacheController {
-
-    private Logger logger = LoggerFactory.getLogger(CacheController.class);
 
     @Autowired
     private CacheService cacheService;
@@ -43,7 +42,7 @@ public class CacheController {
         Map<String, String> map = new HashMap<>(1);
         map.put("productId", productId.toString());
         String response = HttpClientUtils.sendPostRequest("http://127.0.0.1:8082/getProductInfo", map);
-        logger.info(response);
+        log.info(response);
 
         return "success";
     }
@@ -55,16 +54,16 @@ public class CacheController {
         }
         HystrixCommand<ProductInfo> productInfoHystrixCommand = new GetProductInfoCommand(productId);
         ProductInfo productInfo = productInfoHystrixCommand.execute();
-        logger.info(productInfo.toString());
-        logger.info(productInfoHystrixCommand.isResponseFromCache() ? "从缓存获取数据" : "不是从缓存获取数据");
-        logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<");
+        log.info(productInfo.toString());
+        log.info(productInfoHystrixCommand.isResponseFromCache() ? "从缓存获取数据" : "不是从缓存获取数据");
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<");
 
         flushCache(productId);
 
         productInfoHystrixCommand = new GetProductInfoCommand(productId);
         productInfo = productInfoHystrixCommand.execute();
-        logger.info(productInfo.toString());
-        logger.info(productInfoHystrixCommand.isResponseFromCache() ? "从缓存获取数据" : "不是从缓存获取数据");
+        log.info(productInfo.toString());
+        log.info(productInfoHystrixCommand.isResponseFromCache() ? "从缓存获取数据" : "不是从缓存获取数据");
         return "success";
     }
 
@@ -79,7 +78,7 @@ public class CacheController {
         HystrixCommand<ProductInfo> productInfoHystrixCommand = new GetProductInfoCommand2(productId);
         ProductInfo productInfo = productInfoHystrixCommand.execute();
         if (productInfo != null) {
-            logger.info(productInfo.toString());
+            log.info(productInfo.toString());
         }
         return productInfo;
     }
@@ -90,7 +89,7 @@ public class CacheController {
             return "fail";
         }
         ProductInfo productInfo = cacheService.getProductInfo(productId);
-        logger.info(productInfo.toString());
+        log.info(productInfo.toString());
         return "success";
     }
 
@@ -104,7 +103,7 @@ public class CacheController {
         observable.subscribe(new Observer<ProductInfo>() {
             @Override
             public void onCompleted() {
-                logger.info("获取完了所有的商品数据");
+                log.info("获取完了所有的商品数据");
             }
 
             @Override
@@ -114,9 +113,29 @@ public class CacheController {
 
             @Override
             public void onNext(ProductInfo productInfo) {
-                logger.info(productInfo.toString());
+                log.info(productInfo.toString());
             }
         });
+        return "success";
+    }
+
+    @RequestMapping("getProductInfos1")
+    public String getProductInfos1(String productIds) {
+        if (productIds == null) {
+            return "fail";
+        }
+        List<Future<ProductInfo>> futures = new ArrayList<>();
+        for (String productId : productIds.split(",")) {
+            GetProductInfosCollapser getProductInfosCollapser = new GetProductInfosCollapser(Long.valueOf(productId));
+            futures.add(getProductInfosCollapser.queue());
+        }
+        for (Future<ProductInfo> future : futures) {
+            try {
+                log.debug(future.get().toString());
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
         return "success";
     }
 

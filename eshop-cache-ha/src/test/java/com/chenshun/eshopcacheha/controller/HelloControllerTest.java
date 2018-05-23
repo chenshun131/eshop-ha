@@ -1,5 +1,6 @@
 package com.chenshun.eshopcacheha.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  * Version: V1.0  <p />
  * Description:  <p />
  */
+@Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class HelloControllerTest {
@@ -42,7 +44,7 @@ public class HelloControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andDo(MockMvcResultHandlers.print())
                 .andReturn();
-        System.out.println("输出 " + mvcResult.getResponse().getContentAsString());
+        log.debug("输出 " + mvcResult.getResponse().getContentAsString());
     }
 
 }
