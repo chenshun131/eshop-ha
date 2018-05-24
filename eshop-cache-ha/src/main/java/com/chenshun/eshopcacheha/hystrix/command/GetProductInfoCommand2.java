@@ -27,10 +27,14 @@ public class GetProductInfoCommand2 extends HystrixCommand<ProductInfo> {
 
     private static final Setter cachedSetter =
             Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("GetProductInfoGroup")) // 设置组名
-                    .andCommandKey(HystrixCommandKey.Factory.asKey("GetProductInfo")) // 设置command名称
+                    .andCommandKey(HystrixCommandKey.Factory.asKey("GetProductInfoCommand")) // 设置command名称
+                    .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("GetProductInfoPool"))
                     .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter()
                             .withCoreSize(10) // 设置线程池大小
-                            .withMaxQueueSize(12)
+                            .withMaximumSize(30)
+                            .withAllowMaximumSizeToDivergeFromCoreSize(true) // 是否允许线程池大小自动动态调整，设置为 true之后，maxSize 就生效
+                            .withKeepAliveTimeMinutes(1) // 设置保持存活的时间，单位是分钟，默认是 1
+                            .withMaxQueueSize(12) // 设置的是等待队列，缓冲队列的大小
                             .withQueueSizeRejectionThreshold(15)) // 队列大小
                     .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                             .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD) // 隔离策略，默认使用线程池隔离

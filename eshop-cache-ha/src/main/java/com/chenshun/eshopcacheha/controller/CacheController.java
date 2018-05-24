@@ -1,5 +1,6 @@
 package com.chenshun.eshopcacheha.controller;
 
+import com.chenshun.eshopcacheha.degrade.IsDegrade;
 import com.chenshun.eshopcacheha.hystrix.command.*;
 import com.chenshun.eshopcacheha.model.ProductInfo;
 import com.chenshun.eshopcacheha.service.CacheService;
@@ -143,6 +144,12 @@ public class CacheController {
     public String getBrandName(Long brandId) {
         GetBrandNameCommand command = new GetBrandNameCommand(brandId);
         return command.execute();
+    }
+
+    @RequestMapping("/isDegrade")
+    public String isDegrade(boolean degrade) {
+        IsDegrade.setDegrade(degrade);
+        return "success";
     }
 
 }
